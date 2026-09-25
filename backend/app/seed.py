@@ -1,3 +1,4 @@
+from app.config import DEFAULT_REMAINDER_EXTRA_PIECES, DEFAULT_REMAINDER_THRESHOLD_MM
 from app.db import connect
 
 
@@ -32,6 +33,16 @@ def init_db():
         );
         """
     )
+    # Backfill default keys on pre-existing databases (idempotent).
+    conn.executemany(
+        "INSERT OR IGNORE INTO settings(key, value) VALUES (?, ?)",
+        [
+            ("waste_pct", "8"),
+            ("remainder_threshold_mm", str(DEFAULT_REMAINDER_THRESHOLD_MM)),
+            ("remainder_extra_pieces", str(DEFAULT_REMAINDER_EXTRA_PIECES)),
+        ],
+    )
+    conn.commit()
     if conn.execute("SELECT COUNT(*) c FROM rooms").fetchone()["c"] == 0:
         conn.executemany(
             "INSERT INTO rooms(name,length,width,data_quality,note) VALUES (?,?,?,?,?)",
@@ -49,6 +60,5 @@ def init_db():
                 ("脏数据-零面积", 0.0, 0.6, "dirty"),
             ],
         )
-        conn.execute("INSERT INTO settings(key,value) VALUES ('waste_pct','8')")
         conn.commit()
     conn.close()

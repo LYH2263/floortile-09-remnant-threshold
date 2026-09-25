@@ -28,3 +28,24 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #f4f0ea; }
 .mini-grid .cell { background: #16a085; aspect-ratio: 1; opacity: 0.85; }
 label { display: block; margin: 0.5rem 0; }
 button { margin-right: 0.5rem; padding: 0.4rem 0.8rem; }
+button.primary { background: #16a085; color: #fff; border: none; cursor: pointer; }
+input[type=number] { width: 6rem; padding: 0.3rem; }
+.switch-row { display: flex; align-items: center; gap: 0.5rem; }
+.switch-row input { width: auto; margin: 0; }
+.field-inline { display: flex; gap: 1.5rem; align-items: center; }
+.field-inline label { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.ok { color: #27ae60; }
+.muted { color: #7f8c8d; }
+.remainder-box { background: #fff; padding: 0.75rem 1rem; margin-top: 0.75rem; max-width: 560px; border-left: 4px solid #16a085; }
+.remainder-title { margin: 0 0 0.5rem; font-size: 0.9rem; }
+.strip-row { display: flex; align-items: center; gap: 0.75rem; margin: 0.4rem 0; }
+.strip-label { width: 150px; font-size: 0.9rem; }
+.strip { flex: 1; height: 14px; background: #e6e2da; }
+.strip__offcut { height: 100%; background: #c0392b; min-width: 2px; }
+.strip__offcut--safe { background: #27ae60; }
+.strip__offcut[style*="width: 0%"] { min-width: 0; }
+.tag { font-size: 0.8rem; padding: 0.1rem 0.5rem; background: #e6e2da; color: #27ae60; white-space: nowrap; }
+.tag--hit { background: #fbe3e0; color: #c0392b; }
+.order-breakdown { margin: 0.5rem 0 0; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover { background: #f4f0ea; }
