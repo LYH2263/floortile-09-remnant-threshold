@@ -4,7 +4,16 @@ from app.engines.tile_math import tile_count
 from app.repositories import history, rooms, settings_repo, tiles
 
 
-def run_estimate(room_id: int, tile_id: int, waste_pct: float | None, save: bool, note: str):
+def run_estimate(
+    room_id: int,
+    tile_id: int,
+    waste_pct: float | None,
+    save: bool,
+    note: str,
+    remnant_enabled: bool = False,
+    remnant_threshold_mm: float | None = None,
+    extra_pieces: int | None = None,
+):
     room = rooms.get_room(room_id)
     if not room:
         raise HTTPException(404, "room not found")
@@ -15,12 +24,41 @@ def run_estimate(room_id: int, tile_id: int, waste_pct: float | None, save: bool
         raise HTTPException(422, "room marked dirty; fix dimensions before estimate")
 
     waste = float(waste_pct) if waste_pct is not None else settings_repo.get_waste_pct()
-    calc = tile_count(room["length"], room["width"], tile["tile_l"], tile["tile_w"], waste)
+
+    # Threshold rule disabled: pass a non-positive threshold so order_count
+    # returns to the pre-change waste-only value.
+    threshold = 0.0
+    extra = 0
+    if remnant_enabled:
+        threshold = (
+            float(remnant_threshold_mm)
+            if remnant_threshold_mm is not None
+            else settings_repo.get_remnant_threshold_mm()
+        )
+        extra = (
+            int(extra_pieces)
+            if extra_pieces is not None
+            else settings_repo.get_extra_pieces()
+        )
+        if threshold <= 0:
+            raise HTTPException(
+                400, "remnant threshold must be > 0 when the rule is enabled"
+            )
+        if extra < 0:
+            raise HTTPException(400, "extra pieces must be >= 0")
+
+    calc = tile_count(
+        room["length"], room["width"], tile["tile_l"], tile["tile_w"], waste,
+        threshold, extra,
+    )
 
     run_id = None
     if save:
         payload = {**calc, "room_id": room_id, "tile_id": tile_id}
-        run_id = history.insert_run(room_id, tile_id, waste, payload, note)
+        run_id = history.insert_run(
+            room_id, tile_id, waste, payload, note,
+            calc["remnant_enabled"], calc["remnant_threshold_mm"], calc["extra_pieces"],
+        )
 
     return {
         "room_id": room_id,

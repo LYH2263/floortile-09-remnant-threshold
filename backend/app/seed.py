@@ -1,3 +1,4 @@
+from app.config import DEFAULT_EXTRA_PIECES, DEFAULT_REMNANT_THRESHOLD_MM
 from app.db import connect
 
 
@@ -28,10 +29,22 @@ def init_db():
             waste_pct REAL,
             result_json TEXT NOT NULL,
             note TEXT DEFAULT '',
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            remnant_enabled INTEGER NOT NULL DEFAULT 0,
+            remnant_threshold_mm REAL NOT NULL DEFAULT 0,
+            extra_pieces INTEGER NOT NULL DEFAULT 0
         );
         """
     )
+    # Migrate databases created before the remnant columns existed.
+    existing_cols = {r["name"] for r in conn.execute("PRAGMA table_info(calc_runs)").fetchall()}
+    for col, ddl in (
+        ("remnant_enabled", "ALTER TABLE calc_runs ADD COLUMN remnant_enabled INTEGER NOT NULL DEFAULT 0"),
+        ("remnant_threshold_mm", "ALTER TABLE calc_runs ADD COLUMN remnant_threshold_mm REAL NOT NULL DEFAULT 0"),
+        ("extra_pieces", "ALTER TABLE calc_runs ADD COLUMN extra_pieces INTEGER NOT NULL DEFAULT 0"),
+    ):
+        if col not in existing_cols:
+            conn.execute(ddl)
     if conn.execute("SELECT COUNT(*) c FROM rooms").fetchone()["c"] == 0:
         conn.executemany(
             "INSERT INTO rooms(name,length,width,data_quality,note) VALUES (?,?,?,?,?)",
@@ -51,4 +64,12 @@ def init_db():
         )
         conn.execute("INSERT INTO settings(key,value) VALUES ('waste_pct','8')")
         conn.commit()
+    for key, value in (
+        ("remnant_threshold_mm", str(DEFAULT_REMNANT_THRESHOLD_MM)),
+        ("extra_pieces", str(DEFAULT_EXTRA_PIECES)),
+    ):
+        conn.execute(
+            "INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (key, value)
+        )
+    conn.commit()
     conn.close()

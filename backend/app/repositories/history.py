@@ -10,13 +10,19 @@ def insert_run(
     waste_pct: float,
     result: dict,
     note: str = "",
+    remnant_enabled: bool = False,
+    remnant_threshold_mm: float = 0.0,
+    extra_pieces: int = 0,
 ) -> int:
     conn = connect()
     try:
         cur = conn.execute(
             """
-            INSERT INTO calc_runs(room_id, tile_id, waste_pct, result_json, note, created_at)
-            VALUES (?,?,?,?,?,?)
+            INSERT INTO calc_runs(
+                room_id, tile_id, waste_pct, result_json, note, created_at,
+                remnant_enabled, remnant_threshold_mm, extra_pieces
+            )
+            VALUES (?,?,?,?,?,?,?,?,?)
             """,
             (
                 room_id,
@@ -25,6 +31,9 @@ def insert_run(
                 json.dumps(result, ensure_ascii=False),
                 note,
                 datetime.now(timezone.utc).isoformat(),
+                1 if remnant_enabled else 0,
+                float(remnant_threshold_mm),
+                int(extra_pieces),
             ),
         )
         conn.commit()
